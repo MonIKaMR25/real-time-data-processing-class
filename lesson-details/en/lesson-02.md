@@ -143,7 +143,7 @@ COMMIT;
 
 Where `id = 1` and `id = 2` are on different ranges (students verify this using `SHOW RANGES`). Benchmark this vs. single-range transactions (both accounts on the same range). The distributed transaction will be measurably slower — this is the 2PC overhead from Module D, made visible.
 
-Then push it harder: run 50 concurrent transfer pairs. Some of them will contend on the same accounts. Observe **transaction retries** — CockroachDB uses serializable isolation by default and will force retries on conflict. Students must implement retry logic in their Python code (CockroachDB's docs have the retry wrapper pattern, but they should understand *why* it's needed: serializable isolation + optimistic concurrency control = aborted transactions that must be retried at the application layer).
+Then push it harder: run 50 concurrent transfer pairs. Some of them will contend on the same accounts. Observe **transaction retries** — CockroachDB uses serializable isolation by default and will force retries on conflict. Students must implement retry logic in their python code (CockroachDB's docs have the retry wrapper pattern, but they should understand *why* it's needed: serializable isolation + optimistic concurrency control = aborted transactions that must be retried at the application layer).
 
 ### Experiment B — Latency injection to simulate multi-region (20 min)
 

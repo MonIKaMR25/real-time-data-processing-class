@@ -127,7 +127,7 @@ CREATE TABLE trips (
 -- (Students can use ogr2ogr, pandas, or DuckDB itself to convert to CSV and then COPY)
 ```
 
-**DuckDB setup:** Install the Python package (`pip install duckdb`). No server, no Docker, no configuration. DuckDB runs in-process. This contrast is deliberate — the simplicity of an embedded analytical engine vs. the operational overhead of a server.
+**DuckDB setup:** Install the python package (`pip install duckdb`). No server, no Docker, no configuration. DuckDB runs in-process. This contrast is deliberate — the simplicity of an embedded analytical engine vs. the operational overhead of a server.
 
 ```python
 import duckdb

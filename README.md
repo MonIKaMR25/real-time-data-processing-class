@@ -4,7 +4,7 @@
 
 **Theory:** PostgreSQL internals — WAL, MVCC, buffer pool, vacuum. What actually bottlenecks first (CPU, I/O, locks, connections). Amdahl's law applied to database workloads.
 
-**Practical:** Students write a Python load generator (`asyncpg` + `asyncio`) and benchmark Postgres to failure. They must identify which resource saturated and at what TPS. Not `pgbench` — they build their own, because understanding the instrumentation matters.
+**Practical:** Students write a python load generator (`asyncpg` + `asyncio`) and benchmark Postgres to failure. They must identify which resource saturated and at what TPS. Not `pgbench` — they build their own, because understanding the instrumentation matters.
 
 **Deliverable:** A written analysis with flame graphs (`py-spy`) and `pg_stat_statements` output explaining their bottleneck.
 
@@ -34,7 +34,7 @@
 
 **Theory:** ETL vs ELT. Idempotency. Slowly changing dimensions (SCD types). Schema evolution. Why orchestration exists (DAGs, dependency resolution, retry semantics). The "exactly-once in batch" problem.
 
-**Practical:** Build a batch pipeline in Python (no Airflow yet — raw code). Extract from the OLTP Postgres, transform with DuckDB, load into an analytical Postgres/DuckDB. Then introduce a failure mid-pipeline and make the pipeline recover correctly without duplicates.
+**Practical:** Build a batch pipeline in python (no Airflow yet — raw code). Extract from the OLTP Postgres, transform with DuckDB, load into an analytical Postgres/DuckDB. Then introduce a failure mid-pipeline and make the pipeline recover correctly without duplicates.
 
 **Deliverable:** Pipeline code that is provably idempotent — run it 3 times, get the same result.
 
@@ -44,7 +44,7 @@
 
 **Theory:** Polling vs. log-based CDC. WAL decoding in Postgres (logical replication slots, `pgoutput` plugin). Debezium architecture. The outbox pattern. Why CDC changes the game — you stop asking "what changed?" and start receiving "what changed."
 
-**Practical:** Set up Postgres logical replication in Python (`psycopg3` logical replication API or a lightweight CDC consumer). Capture inserts/updates/deletes as a stream of events. Lean into the Rust+Python bindings angle if desired, or keep it pure Python.
+**Practical:** Set up Postgres logical replication in python (`psycopg3` logical replication API or a lightweight CDC consumer). Capture inserts/updates/deletes as a stream of events. Lean into the Rust+python bindings angle if desired, or keep it pure python.
 
 **Deliverable:** A working CDC consumer that maintains a materialized view in DuckDB that stays in sync with the OLTP source.
 
@@ -54,7 +54,7 @@
 
 **Theory:** Log-structured storage. Partitions, offsets, consumer groups. Exactly-once semantics (idempotent producers, transactional consumers). Kafka's ISR mechanism. Why Kafka is a commit log, not a message queue.
 
-**Practical:** Deploy Kafka (KRaft mode, no ZooKeeper). Students write Python producers/consumers (`confluent-kafka-python`). Experiment with partition assignment, rebalancing, consumer lag. Deliberately produce out-of-order events and observe the consequences.
+**Practical:** Deploy Kafka (KRaft mode, no ZooKeeper). Students write python producers/consumers (`confluent-kafka-python`). Experiment with partition assignment, rebalancing, consumer lag. Deliberately produce out-of-order events and observe the consequences.
 
 **Deliverable:** A consumer that handles rebalancing correctly and reports its own lag metrics.
 
@@ -64,7 +64,7 @@
 
 **Theory:** Stream processing topology (sources, operators, sinks). Stateless transforms (map, filter, flatMap). Windowing: tumbling, sliding, session. Event time vs. processing time. Watermarks and the completeness/latency tradeoff.
 
-**Practical:** Faust (Python-native Kafka Streams) or PyFlink. Build a pipeline that consumes the CDC events from Lesson 5 via Kafka (Lesson 6) and computes windowed aggregations — e.g., revenue per 5-minute tumbling window. Inject late events and observe watermark behavior.
+**Practical:** Faust (python-native Kafka Streams) or PyFlink. Build a pipeline that consumes the CDC events from Lesson 5 via Kafka (Lesson 6) and computes windowed aggregations — e.g., revenue per 5-minute tumbling window. Inject late events and observe watermark behavior.
 
 **Deliverable:** Pipeline that correctly handles late data with a configurable allowed lateness, and demonstrates what happens when events arrive after the window closes.
 
@@ -94,7 +94,7 @@
 
 **Theory:** Pre-aggregation vs. on-the-fly. Materialized views. Real-time OLAP engines (ClickHouse, Apache Pinot, Apache Druid) — how they differ from batch OLAP (DuckDB/Snowflake). Ingestion latency, query latency, and the tradeoff between them. LSM trees in an OLAP context.
 
-**Practical:** Deploy ClickHouse. Feed it from the Kafka stream. Build a dashboard query layer (Python + ClickHouse HTTP interface) that serves sub-second aggregations over the last N minutes of streaming data. Compare against querying DuckDB with batch-loaded data.
+**Practical:** Deploy ClickHouse. Feed it from the Kafka stream. Build a dashboard query layer (python + ClickHouse HTTP interface) that serves sub-second aggregations over the last N minutes of streaming data. Compare against querying DuckDB with batch-loaded data.
 
 **Deliverable:** A live-updating analytical endpoint with measured query latency under concurrent ingestion.
 

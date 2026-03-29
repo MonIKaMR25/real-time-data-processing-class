@@ -560,7 +560,7 @@ DELETE FROM orders WHERE id = 2;
 In the consumer terminal, they should see each event arrive and be applied. Then verify in DuckDB:
 
 ```python
-# In a separate Python session
+# In a separate python session
 import duckdb
 con = duckdb.connect("materialized.duckdb")
 con.execute("SELECT * FROM orders").fetchall()

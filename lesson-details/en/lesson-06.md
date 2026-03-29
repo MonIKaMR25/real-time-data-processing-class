@@ -78,7 +78,7 @@ Exactly-once in Kafka operates at three levels, and conflating them is a common 
 
 **Level 3 — Consumer read isolation.** Consumers set `isolation.level` to `read_committed` to only see records from committed transactions. Without this, consumers see uncommitted records that might later be aborted. This is the consumer-side complement to transactional producers.
 
-**End-to-end exactly-once** (consume-process-produce) requires all three: idempotent producer, transactional producer wrapping the offset commit and output writes in a single transaction, and downstream consumers using `read_committed`. This is the Kafka Streams model. Outside of Kafka Streams, achieving true exactly-once typically means idempotent producers + at-least-once delivery + idempotent consumers (the consumer can handle seeing the same record twice without incorrect side effects). This is the pragmatic approach for most Python consumers.
+**End-to-end exactly-once** (consume-process-produce) requires all three: idempotent producer, transactional producer wrapping the offset commit and output writes in a single transaction, and downstream consumers using `read_committed`. This is the Kafka Streams model. Outside of Kafka Streams, achieving true exactly-once typically means idempotent producers + at-least-once delivery + idempotent consumers (the consumer can handle seeing the same record twice without incorrect side effects). This is the pragmatic approach for most python consumers.
 
 ### Module E — Replication and the ISR mechanism
 
@@ -191,7 +191,7 @@ docker exec kafka-1 /opt/kafka/bin/kafka-topics.sh \
     --describe --topic test
 ```
 
-Install the Python client: `pip install confluent-kafka`. Not `kafka-python` — it's unmaintained and lacks critical features. `confluent-kafka` is a wrapper around `librdkafka` (C library), which means it's fast and supports the full Kafka protocol.
+Install the python client: `pip install confluent-kafka`. Not `kafka-python` — it's unmaintained and lacks critical features. `confluent-kafka` is a wrapper around `librdkafka` (C library), which means it's fast and supports the full Kafka protocol.
 
 ### Phase 1 — Producer basics and partition behavior (20 min)
 

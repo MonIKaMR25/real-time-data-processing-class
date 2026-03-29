@@ -76,7 +76,7 @@ CREATE TABLE orders (
 
 ### Phase 1 — Naive load generator (20 min)
 
-Students write a synchronous Python script using `psycopg3` that inserts rows in a loop. Measure TPS. It'll be terrible — maybe 500–2000 TPS depending on hardware.
+Students write a synchronous python script using `psycopg3` that inserts rows in a loop. Measure TPS. It'll be terrible — maybe 500–2000 TPS depending on hardware.
 
 Why? One connection, synchronous commits, no pipelining. Each `INSERT` round-trips to the server and waits for WAL flush.
 
@@ -102,7 +102,7 @@ While the load generator runs:
 - `vmstat 1` for context switches and CPU
 - `htop` for per-process CPU
 
-**On the Python side:**
+**On the python side:**
 
 - `py-spy record` to generate a flame graph. Is the bottleneck in `asyncpg`? In the event loop? In network round-trips?
 

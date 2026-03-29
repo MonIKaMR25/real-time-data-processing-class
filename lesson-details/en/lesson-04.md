@@ -1,6 +1,6 @@
 # Lesson 4 — Classical batch ETL and why "just move the data" is hard
 
-Lesson 3 ended with the punchline: OLTP and OLAP optimize for opposite access patterns. That means data has to move from one to the other. The naive version of that sounds trivial — SELECT from Postgres, write to DuckDB, done. This lesson exists because that naive version breaks in every way that matters: it duplicates data on retry, it can't handle schema changes, it loses track of what it already moved, and it falls over at 3 AM with no one watching. Students need to feel this pain in raw Python before they're allowed to touch an orchestrator.
+Lesson 3 ended with the punchline: OLTP and OLAP optimize for opposite access patterns. That means data has to move from one to the other. The naive version of that sounds trivial — SELECT from Postgres, write to DuckDB, done. This lesson exists because that naive version breaks in every way that matters: it duplicates data on retry, it can't handle schema changes, it loses track of what it already moved, and it falls over at 3 AM with no one watching. Students need to feel this pain in raw python before they're allowed to touch an orchestrator.
 
 ## Hour 1 — Theory: why moving data is a systems problem, not a scripting problem
 
@@ -8,7 +8,7 @@ Lesson 3 ended with the punchline: OLTP and OLAP optimize for opposite access pa
 
 ETL (Extract, Transform, Load) transforms data *before* loading it into the target. ELT (Extract, Load, Transform) loads raw data first, then transforms it inside the target system. The difference isn't pedantic — it determines where compute happens and who owns the transformation logic.
 
-**ETL** was the dominant paradigm when analytical targets were expensive (proprietary data warehouses billed per compute-hour). You'd clean, aggregate, and reshape data in a cheap middle layer (Python, Spark, Informatica) so the warehouse only stored the final result. The downside: you've thrown away the raw data. If the business asks a new question next month, you can't go back and re-derive the answer from data you never loaded.
+**ETL** was the dominant paradigm when analytical targets were expensive (proprietary data warehouses billed per compute-hour). You'd clean, aggregate, and reshape data in a cheap middle layer (python, Spark, Informatica) so the warehouse only stored the final result. The downside: you've thrown away the raw data. If the business asks a new question next month, you can't go back and re-derive the answer from data you never loaded.
 
 **ELT** became dominant when analytical storage got cheap (S3, BigQuery, Snowflake, DuckDB). You load everything raw, then transform in-place using SQL. The raw data is always available for re-processing. The downside: your analytical target must be powerful enough to run the transformations, and you're storing a lot of data you might never query.
 
@@ -141,7 +141,7 @@ End the theory hour with this framing: **every problem you just learned about is
 
 ---
 
-## Hour 2 — Practical: build a batch pipeline in raw Python, then break it
+## Hour 2 — Practical: build a batch pipeline in raw python, then break it
 
 ### Setup (10 min)
 
@@ -228,7 +228,7 @@ def transform(raw_orders: list[dict], target_date: date) -> list[dict]:
     """Aggregate orders into daily revenue by status using DuckDB."""
     con = duckdb.connect()
     con.execute("CREATE TABLE raw AS SELECT * FROM raw_orders")
-    # DuckDB can query Python variables directly — this is one of its killer features
+    # DuckDB can query python variables directly — this is one of its killer features
     result = con.execute("""
         SELECT
             ?::DATE AS date,
@@ -419,7 +419,7 @@ Present this DAG:
 ```python
 # dags/daily_revenue_pipeline.py
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import pythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from datetime import datetime, timedelta
 import duckdb
@@ -453,7 +453,7 @@ def transform(**context):
     raw_orders = context["ti"].xcom_pull(key="raw_orders", task_ids="extract")
 
     con = duckdb.connect()
-    # DuckDB can query Python objects directly
+    # DuckDB can query python objects directly
     result = con.execute("""
         SELECT
             ?::DATE AS date,
@@ -490,9 +490,9 @@ with DAG(
     max_active_runs=3,  # Limit parallelism for backfills
 ) as dag:
 
-    extract_task = PythonOperator(task_id="extract", python_callable=extract)
-    transform_task = PythonOperator(task_id="transform", python_callable=transform)
-    load_task = PythonOperator(task_id="load", python_callable=load)
+    extract_task = pythonOperator(task_id="extract", python_callable=extract)
+    transform_task = pythonOperator(task_id="transform", python_callable=transform)
+    load_task = pythonOperator(task_id="load", python_callable=load)
 
     extract_task >> transform_task >> load_task
 ```
@@ -627,7 +627,7 @@ Lesson 5 will change the paradigm entirely: instead of periodically asking "what
 
 A GitHub repository containing:
 
-- **Pipeline code** (raw Python, no orchestration framework) that extracts from OLTP Postgres, transforms with DuckDB, and loads into an analytical target.
+- **Pipeline code** (raw python, no orchestration framework) that extracts from OLTP Postgres, transforms with DuckDB, and loads into an analytical target.
 - **The pipeline must be provably idempotent.** Include a test script or Makefile target that runs the pipeline 3 times for the same date and then queries the target to prove the result is identical each time. The proof should print row counts and checksums.
 - **A failure injection mode** that randomly crashes the pipeline mid-load, and a retry wrapper that recovers correctly.
 - **A `README.md`** explaining the idempotency strategy chosen, what failure modes are handled, and what would break if the source schema changed.
