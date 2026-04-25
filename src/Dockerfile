@@ -1,18 +1,24 @@
-FROM redpandadata/redpanda:v24.2.7
+FROM redpandadata/redpanda:v24.2.7 AS redpanda
 
-USER root
+FROM python:3.13-slim
 
+# Redpanda binaries from the official image (same Debian bookworm glibc, compatible)
+COPY --from=redpanda /usr/bin/redpanda /usr/bin/redpanda
+COPY --from=redpanda /usr/bin/rpk /usr/bin/rpk
+
+# Runtime libs Redpanda needs that slim doesn't ship
 RUN apt-get update && apt-get install -y \
-    python3 python3-pip curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip3 install uv
+    curl ca-certificates libnuma1 libatomic1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# ClickHouse single statically-linked binary; non-interactive in Docker (no TTY)
+# ClickHouse single statically-linked binary; non-interactive without a TTY
 WORKDIR /tmp
 RUN curl -fsSL https://clickhouse.com/ | sh \
     && mv ./clickhouse /usr/local/bin/clickhouse
 
 RUN mkdir -p /var/lib/redpanda /var/lib/clickhouse /var/log/clickhouse-server
+
+RUN pip install uv
 
 WORKDIR /app
 COPY uv.lock pyproject.toml ./
