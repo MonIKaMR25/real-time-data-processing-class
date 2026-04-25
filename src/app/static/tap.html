@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Tap</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body {
+    background: radial-gradient(ellipse at top, #1a0a2e 0%, #0a0a0a 60%);
+    color: #f0f0f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+  button {
+    width: 70vmin; height: 70vmin;
+    border-radius: 50%; border: 0;
+    background: linear-gradient(135deg, #ff006e, #8338ec);
+    color: white;
+    font-size: 8vmin; font-weight: 800; letter-spacing: 0.05em;
+    cursor: pointer;
+    box-shadow: 0 30px 80px rgba(131, 56, 236, 0.6), inset 0 -8px 20px rgba(0,0,0,0.25);
+    transition: transform 0.06s ease-out, box-shadow 0.06s ease-out;
+    touch-action: manipulation;
+  }
+  button:active {
+    transform: scale(0.94);
+    box-shadow: 0 10px 30px rgba(131, 56, 236, 0.5), inset 0 -4px 10px rgba(0,0,0,0.3);
+  }
+  .meta {
+    margin-top: 32px;
+    font-size: 14px;
+    opacity: 0.5;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .count {
+    margin-top: 8px;
+    font-size: 28px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+  <button id="btn">TAP</button>
+  <div class="meta">your taps</div>
+  <div class="count"><span id="count">0</span></div>
+<script>
+  let sid = localStorage.getItem("sid");
+  if (!sid) {
+    sid = "s-" + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem("sid", sid);
+  }
+  let n = 0;
+  const countEl = document.getElementById("count");
+  const btn = document.getElementById("btn");
+  btn.addEventListener("click", () => {
+    n++;
+    countEl.textContent = n;
+    fetch("/api/tap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sid }),
+    }).catch(() => {});
+  });
+</script>
+</body>
+</html>
