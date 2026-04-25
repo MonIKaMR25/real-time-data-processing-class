@@ -44,21 +44,95 @@
     font-size: 28px;
     font-weight: 700;
   }
+  #name-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  #name-screen label {
+    font-size: 14px;
+    opacity: 0.5;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  #name-input {
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    color: #f0f0f0;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    padding: 16px 24px;
+    width: 80vw;
+    max-width: 320px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #name-input:focus { border-color: #8338ec; }
+  #name-input::placeholder { color: rgba(255,255,255,0.2); }
+  #go-btn {
+    background: linear-gradient(135deg, #ff006e, #8338ec);
+    border: 0; border-radius: 12px;
+    color: white;
+    font-size: 20px; font-weight: 700;
+    padding: 14px 48px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+  }
+  #tap-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
 </style>
 </head>
 <body>
-  <button id="btn">TAP</button>
-  <div class="meta">your taps</div>
-  <div class="count"><span id="count">0</span></div>
+  <div id="name-screen">
+    <label>Tu nombre</label>
+    <input id="name-input" type="text" placeholder="Ej: Carlos" maxlength="20" autocomplete="off">
+    <button id="go-btn">Entrar</button>
+  </div>
+
+  <div id="tap-screen">
+    <button id="btn">TAP</button>
+    <div class="meta">your taps</div>
+    <div class="count"><span id="count">0</span></div>
+  </div>
 <script>
-  let sid = localStorage.getItem("sid");
-  if (!sid) {
-    sid = "s-" + Math.random().toString(36).slice(2, 8);
-    localStorage.setItem("sid", sid);
-  }
-  let n = 0;
+  const nameScreen = document.getElementById("name-screen");
+  const tapScreen = document.getElementById("tap-screen");
+  const nameInput = document.getElementById("name-input");
+  const goBtn = document.getElementById("go-btn");
   const countEl = document.getElementById("count");
   const btn = document.getElementById("btn");
+
+  let sid = localStorage.getItem("sid");
+  let n = 0;
+
+  function startTapping() {
+    nameScreen.style.display = "none";
+    tapScreen.style.display = "flex";
+  }
+
+  // If they already entered a name, skip straight to tapping
+  if (sid) {
+    startTapping();
+  }
+
+  function saveName() {
+    const name = nameInput.value.trim();
+    if (!name) return;
+    sid = name;
+    localStorage.setItem("sid", sid);
+    startTapping();
+  }
+
+  goBtn.addEventListener("click", saveName);
+  nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") saveName(); });
+
   btn.addEventListener("click", () => {
     n++;
     countEl.textContent = n;
