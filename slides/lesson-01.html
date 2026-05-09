@@ -1264,13 +1264,13 @@
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">run_all.py output</span></div>
             <div class="code-body"><span class="v">Scenario</span>                       TPS   vs Naive
 <span class="p">──────────────────────────────────────────</span>
-  Naive (1 conn, sync)       <span class="g">2,028</span>     1.0&times;
-  Async (10 conns)           <span class="g">9,422</span>     4.6&times;
-  Async (50 conns)          <span class="g">16,617</span>     8.2&times;
-  Async (50, sync=off)      <span class="g">17,768</span>     8.8&times;
-  COPY (batch=1000)        <span class="g">108,829</span>    53.7&times;
-  COPY (4 parallel)        <span class="g">199,712</span>    98.5&times;
-  Hot row (50 conns)         <span class="g">2,789</span>     1.4&times;</div>
+  Naive (1 conn, sync)       <span class="g">3,472</span>     1.0&times;
+  Async (10 conns)          <span class="g">10,334</span>     3.0&times;
+  Async (50 conns)          <span class="g">14,293</span>     4.1&times;
+  Async (50, sync=off)      <span class="g">17,933</span>     5.2&times;
+  COPY (batch=1000)        <span class="g">177,613</span>    51.2&times;
+  COPY (4 parallel)        <span class="g">356,964</span>   102.8&times;
+  Hot row (50 conns, 10s)    <span class="g">4,566</span>     1.3&times;</div>
         </div>
     </div>
     <span class="slide-num" style="color:rgba(255,255,255,0.3);">28 / 30</span>
