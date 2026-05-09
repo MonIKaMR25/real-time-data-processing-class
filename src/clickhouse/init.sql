@@ -4,7 +4,8 @@ CREATE DATABASE IF NOT EXISTS demo;
 CREATE TABLE IF NOT EXISTS demo.taps_kafka (
     ts          DateTime64(3),
     session_id  String,
-    device      String
+    device      String,
+    client_ts   Int64
 ) ENGINE = Kafka
 SETTINGS
     kafka_broker_list      = 'redpanda:9092',
@@ -19,10 +20,11 @@ SETTINGS
 CREATE TABLE IF NOT EXISTS demo.taps (
     ts          DateTime64(3),
     session_id  String,
-    device      String
+    device      String,
+    client_ts   Int64
 ) ENGINE = MergeTree()
 ORDER BY ts;
 
 -- Materialized view: bridge from Kafka stream into the persistent table
 CREATE MATERIALIZED VIEW IF NOT EXISTS demo.taps_mv TO demo.taps AS
-SELECT ts, session_id, device FROM demo.taps_kafka;
+SELECT ts, session_id, device, client_ts FROM demo.taps_kafka;

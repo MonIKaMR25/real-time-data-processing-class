@@ -73,6 +73,7 @@ async def tap(req: Request):
         "ts": ts,
         "session_id": str(body.get("session_id", "anon"))[:64],
         "device": req.headers.get("user-agent", "")[:64],
+        "client_ts": int(body.get("client_ts", 0)),
     }
     await STATE["producer"].send_and_wait(TOPIC, json.dumps(payload).encode("utf-8"))
     return {"ok": True}
@@ -106,11 +107,24 @@ def query_metrics() -> dict:
     tps_dict = {r[0].replace(tzinfo=timezone.utc).isoformat(): int(r[1]) for r in tps_rows}
     tps_list = [{"sec": k, "n": v} for k, v in sorted(tps_dict.items())]
 
+    p95_rows = ch.query(
+        """
+        SELECT quantile(0.95)(
+            dateDiff('millisecond', fromUnixTimestamp64Milli(client_ts), ts)
+        ) AS p95
+        FROM demo.taps
+        WHERE ts > now() - INTERVAL 10 SECOND
+          AND client_ts > 0
+        """
+    ).result_rows
+    p95_val = int(p95_rows[0][0]) if p95_rows and p95_rows[0][0] is not None else None
+
     return {
         "total": int(total),
         "tps": tps_list,
         "now": datetime.now(timezone.utc).isoformat(),
         "top": [{"session": r[0], "n": int(r[1])} for r in top_rows],
+        "p95_ms": p95_val,
     }
 
 
