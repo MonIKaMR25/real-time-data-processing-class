@@ -139,6 +139,8 @@ async def main() -> None:
                         help="Start from demo N (1-5)")
     parser.add_argument("--only", "-o", type=int, default=None,
                         help="Run only demo N (1-5)")
+    parser.add_argument("--continuous", "-c", action="store_true",
+                        help="Run all demos back-to-back without pausing")
     args = parser.parse_args()
 
     print(f"\n{BOLD}{'═' * 64}{RESET}")
@@ -172,9 +174,10 @@ async def main() -> None:
 
         await runner()
 
-        # Pause before next demo
-        next_name = DEMOS[i + 1][0] if i + 1 < len(runners) else None
-        pause(next_name)
+        # Pause before next demo (unless --continuous)
+        if not args.continuous:
+            next_name = DEMOS[i + 1][0] if i + 1 < len(runners) else None
+            pause(next_name)
 
     print(f"\n{GREEN}{BOLD}  ✓ All demos complete.{RESET}")
     print(f"{DIM}  Open http://localhost:8080 to explore the CockroachDB Admin UI.{RESET}\n")

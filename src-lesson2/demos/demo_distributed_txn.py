@@ -72,6 +72,7 @@ async def bench_transfers(
 
     stats = {"done": 0, "retries": 0, "failures": 0}
     latencies: list[float] = []
+    running = True
 
     async def worker(n: int):
         async with pool.acquire() as conn:
@@ -84,12 +85,32 @@ async def bench_transfers(
                 )
                 stats["done"] += 1
 
+    async def progress():
+        last_done = 0
+        last_time = time.monotonic()
+        while running:
+            await asyncio.sleep(2.0)
+            if not running:
+                break
+            now = time.monotonic()
+            delta = stats["done"] - last_done
+            dt = now - last_time
+            tps = delta / dt if dt > 0 else 0
+            pct = stats["done"] / transfers * 100 if transfers > 0 else 0
+            print(f"      {stats['done']:>6,}/{transfers:,}  ({pct:4.0f}%)  ~{tps:,.0f} TPS  retries: {stats['retries']:,}", flush=True)
+            last_done = stats["done"]
+            last_time = now
+
     t0 = time.monotonic()
+    progress_task = asyncio.create_task(progress())
     await asyncio.gather(*[
         worker(per_worker + (1 if i < remainder else 0))
         for i in range(connections)
     ])
     elapsed = time.monotonic() - t0
+    running = False
+    progress_task.cancel()
+    await asyncio.gather(progress_task, return_exceptions=True)
     await pool.close()
 
     latencies.sort()
@@ -166,11 +187,11 @@ async def run(transfers: int, connections: int) -> None:
     scenarios = [
         ("Local, low contention", pick_local_wide, transfers,
          "Both accounts in range A (1-500). No 2PC, minimal retries."),
-        ("Local, high contention", pick_local_narrow, transfers // 2,
+        ("Local, high contention", pick_local_narrow, transfers // 4,
          "Both accounts 1-5, same range. Serializable retries pile up."),
         ("Cross-range, low cont.", pick_cross_wide, transfers,
          "One from range A, one from B. 2PC required, but keys spread out."),
-        ("Cross-range, high cont.", pick_cross_narrow, transfers // 2,
+        ("Cross-range, high cont.", pick_cross_narrow, transfers // 4,
          "Keys 498-500 vs 501-503. 2PC + contention = worst case."),
     ]
 
