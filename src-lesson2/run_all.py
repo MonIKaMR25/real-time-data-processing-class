@@ -1,16 +1,14 @@
-"""Run all benchmark scenarios back-to-back and print a comparison table.
+"""Run the same Lesson 1 benchmark scenarios against CockroachDB.
+
+Same workload, same table, different engine. Compare directly.
 
 Usage:
     python run_all.py [--rows 50000]
 
-Runs:
-    1. Naive (1 conn, synchronous)
-    2. Async (10 conns)
-    3. Async (50 conns)
-    4. Async (50 conns, sync_commit=off)
-    5. COPY batch (batch_size=1000)
-    6. COPY (4 parallel)
-    7. Hot row (50 conns, 10s)
+CockroachDB notes:
+    - No synchronous_commit knob (always durable, CP system)
+    - COPY works but goes through the distributed SQL layer
+    - Serializable isolation by default → transaction retries on conflict
 """
 
 import asyncio
@@ -19,7 +17,8 @@ import time
 
 import asyncpg
 
-DSN = "postgresql://bench:bench@localhost:5432/bench"
+# CockroachDB uses the Postgres wire protocol
+DSN = "postgresql://root@localhost:26257/bench?sslmode=disable"
 INSERT_SQL = "INSERT INTO orders (customer_id, amount) VALUES ($1, $2)"
 
 
@@ -44,15 +43,13 @@ def make_result(tps: float, latencies: list[float]) -> dict:
 
 async def reset():
     conn = await asyncpg.connect(DSN)
-    await conn.execute("TRUNCATE orders RESTART IDENTITY")
-    await conn.execute("SELECT pg_stat_statements_reset()")
-    await conn.execute("SELECT pg_stat_reset()")
+    await conn.execute("TRUNCATE orders")
     await conn.close()
 
 
+# ── Scenario 1: Naive single-connection inserts ─────────────
 async def bench_naive(rows: int) -> dict:
     conn = await asyncpg.connect(DSN)
-    await conn.execute("SET synchronous_commit = on")
     lats = []
     t0 = time.monotonic()
     for _ in range(rows):
@@ -64,7 +61,8 @@ async def bench_naive(rows: int) -> dict:
     return make_result(rows / elapsed, lats)
 
 
-async def bench_async(rows: int, connections: int, no_sync: bool = False) -> dict:
+# ── Scenario 2: Async multi-connection inserts ──────────────
+async def bench_async(rows: int, connections: int) -> dict:
     pool = await asyncpg.create_pool(DSN, min_size=connections, max_size=connections)
     rows_per_worker = rows // connections
     remainder = rows % connections
@@ -73,8 +71,6 @@ async def bench_async(rows: int, connections: int, no_sync: bool = False) -> dic
     async def worker(n: int):
         conn = await pool.acquire()
         try:
-            if no_sync:
-                await conn.execute("SET synchronous_commit = off")
             for _ in range(n):
                 t_op = time.monotonic()
                 await conn.execute(INSERT_SQL, random.randint(1, 10_000), round(random.uniform(1, 500), 2))
@@ -93,6 +89,7 @@ async def bench_async(rows: int, connections: int, no_sync: bool = False) -> dic
     return make_result(rows / elapsed, lats)
 
 
+# ── Scenario 3: COPY batch (single connection) ─────────────
 async def bench_copy(rows: int, batch_size: int = 1000) -> dict:
     conn = await asyncpg.connect(DSN)
     lats = []
@@ -115,6 +112,7 @@ async def bench_copy(rows: int, batch_size: int = 1000) -> dict:
     return make_result(rows / elapsed, lats)
 
 
+# ── Scenario 4: Parallel COPY ──────────────────────────────
 async def bench_parallel_copy(rows: int, connections: int = 4, batch_size: int = 1000) -> dict:
     pool = await asyncpg.create_pool(DSN, min_size=connections, max_size=connections)
     rows_per_worker = rows // connections
@@ -149,17 +147,15 @@ async def bench_parallel_copy(rows: int, connections: int = 4, batch_size: int =
     return make_result(rows / elapsed, lats)
 
 
+# ── Scenario 5: Hot row contention ─────────────────────────
 async def bench_hotrow(connections: int, duration: int) -> dict:
     pool = await asyncpg.create_pool(DSN, min_size=connections, max_size=connections)
-    # Ensure target row
+    # Ensure target row exists
     async with pool.acquire() as conn:
-        row = await conn.fetchval("SELECT id FROM orders WHERE id = 1")
-        if row is None:
-            await conn.execute(
-                "INSERT INTO orders (id, customer_id, amount) "
-                "OVERRIDING SYSTEM VALUE VALUES (1, 1, 10.00)")
+        await conn.execute(
+            "UPSERT INTO orders (id, customer_id, amount) VALUES (1, 1, 10.00)")
 
-    counter = {"done": 0}
+    counter = {"done": 0, "retries": 0}
     lats: list[float] = []
     running = True
 
@@ -167,12 +163,16 @@ async def bench_hotrow(connections: int, duration: int) -> dict:
         nonlocal running
         async with pool.acquire() as conn:
             while running:
-                t_op = time.monotonic()
-                await conn.execute(
-                    "UPDATE orders SET amount = amount + $1 WHERE id = 1",
-                    round(random.uniform(0.01, 1.0), 2))
-                lats.append(time.monotonic() - t_op)
-                counter["done"] += 1
+                try:
+                    t_op = time.monotonic()
+                    await conn.execute(
+                        "UPDATE orders SET amount = amount + $1 WHERE id = 1",
+                        round(random.uniform(0.01, 1.0), 2))
+                    lats.append(time.monotonic() - t_op)
+                    counter["done"] += 1
+                except asyncpg.SerializationError:
+                    # CockroachDB serializable isolation → retry
+                    counter["retries"] += 1
 
     tasks = [asyncio.create_task(worker()) for _ in range(connections)]
     await asyncio.sleep(duration)
@@ -188,16 +188,18 @@ async def main(rows: int) -> None:
     results = []
 
     scenarios = [
-        ("Naive (1 conn, sync)", lambda: bench_naive(rows)),
+        ("Naive (1 conn)", lambda: bench_naive(rows)),
         ("Async (10 conns)", lambda: bench_async(rows, 10)),
         ("Async (50 conns)", lambda: bench_async(rows, 50)),
-        ("Async (50, sync=off)", lambda: bench_async(rows, 50, no_sync=True)),
         ("COPY (batch=1000)", lambda: bench_copy(rows)),
         ("COPY (4 parallel)", lambda: bench_parallel_copy(rows, connections=4)),
         ("Hot row (50 conns, 10s)", lambda: bench_hotrow(50, 10)),
     ]
 
-    print(f"Running all benchmarks with {rows:,} rows each...")
+    print(f"CockroachDB Benchmarks — {rows:,} rows each")
+    print("=" * 85)
+    print("  Note: CockroachDB has no synchronous_commit=off option.")
+    print("  Every commit goes through Raft consensus (majority ack).")
     print("=" * 85)
 
     for name, fn in scenarios:
@@ -217,11 +219,13 @@ async def main(rows: int) -> None:
         print(f"  {name:<26} {r['tps']:>7,.0f}   {ratio:>7.1f}×"
               f" {r['p50']:>8.2f} {r['p95']:>8.2f} {r['p99']:>8.2f}")
     print("=" * 85)
+    print("\nCompare these with your Lesson 1 Postgres numbers.")
+    print("Open http://localhost:8080 to see the CockroachDB Admin UI.")
 
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Run all benchmarks and compare")
+    parser = argparse.ArgumentParser(description="Lesson 2: CockroachDB benchmarks")
     parser.add_argument("--rows", "-n", type=int, default=50_000)
     args = parser.parse_args()
     asyncio.run(main(args.rows))
