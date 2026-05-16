@@ -1246,22 +1246,22 @@
         <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Why is cross-range <em>20&times; faster</em> under contention?</h2>
         <div class="two-col reveal" style="margin-top:clamp(0.4rem,0.8vh,0.6rem);flex:unset;">
             <div class="col">
-                <span class="col-label" style="color:var(--terracotta);">Local high contention &mdash; 9 TPS, 53% retries</span>
+                <span class="col-label" style="color:var(--terracotta);">Local &mdash; 9 TPS, 53% retries</span>
                 <ul class="bullets" style="margin-top:clamp(0.3rem,0.6vh,0.4rem);">
-                    <li>Keys {1&ndash;5}: sender <strong>and</strong> receiver draw from the same pool</li>
-                    <li>Account 3 can be debited in tx&nbsp;A and credited in tx&nbsp;B &mdash; <strong>cross-role conflict</strong></li>
-                    <li>SSI detects conflict at commit &rarr; <strong>abort the loser entirely</strong></li>
+                    <li>Keys {1&ndash;5}: sender and receiver draw from the same pool</li>
+                    <li>Account 3 can be debited in tx&nbsp;A and credited in tx&nbsp;B &mdash; cross-role conflict</li>
+                    <li>SSI detects conflict at commit &rarr; abort the loser entirely</li>
                     <li>Retries collide with other retries &rarr; exponential cascade</li>
                     <li>One leaseholder serializes everything</li>
                 </ul>
             </div>
             <div class="col">
-                <span class="col-label" style="color:var(--sage);">Cross-range high contention &mdash; 187 TPS, 0.4% retries</span>
+                <span class="col-label" style="color:var(--sage);">Cross-range &mdash; 187 TPS, 0.4% retries</span>
                 <ul class="bullets" style="margin-top:clamp(0.3rem,0.6vh,0.4rem);">
-                    <li>Debits: {498&ndash;500} &nbsp;&middot;&nbsp; Credits: {501&ndash;503} &mdash; <strong>disjoint sets</strong></li>
-                    <li>A sender can <em>never</em> be a receiver &mdash; cross-role conflicts are impossible</li>
+                    <li>Debits: {498&ndash;500} &middot; Credits: {501&ndash;503} &mdash; disjoint sets</li>
+                    <li>A sender can <em>never</em> be a receiver &mdash; cross-role conflicts are structurally impossible</li>
                     <li>Only same-role conflicts: two txns both debiting 498</li>
-                    <li>CockroachDB resolves with a <strong>timestamp push</strong>, not an abort</li>
+                    <li>CockroachDB resolves with a timestamp push, not an abort</li>
                     <li>Each leaseholder processes its side independently</li>
                 </ul>
             </div>
