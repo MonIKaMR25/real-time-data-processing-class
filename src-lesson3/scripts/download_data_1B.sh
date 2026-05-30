@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-DATA_DIR="$(dirname "$0")/data"
+DATA_DIR="$(dirname "$0")/../data"
 mkdir -p "$DATA_DIR"
 
 BASE_URL="https://d37ci6vzurychx.cloudfront.net/trip-data"

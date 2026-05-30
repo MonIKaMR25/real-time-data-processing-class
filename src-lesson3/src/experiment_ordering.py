@@ -20,7 +20,7 @@ from pathlib import Path
 
 import duckdb
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).parent.parent / "data"
 PARQUET_GLOB = str(DATA_DIR / "yellow_tripdata_*.parquet")
 DB_PATH = str(DATA_DIR / "ordering_experiment.duckdb")
 

@@ -7,12 +7,12 @@
 #
 #   10M   → this script (workshop default)
 #   100M  → set MONTHS_PER_YEAR=12 YEARS="2023 2024 2025" below, or:
-#               ./download_data.sh stretch
-#   1B    → see download_data_1B.sh
+#               ./scripts/download_data.sh stretch
+#   1B    → see scripts/download_data_1B.sh
 
 set -euo pipefail
 
-DATA_DIR="$(dirname "$0")/data"
+DATA_DIR="$(dirname "$0")/../data"
 mkdir -p "$DATA_DIR"
 
 BASE_URL="https://d37ci6vzurychx.cloudfront.net/trip-data"
@@ -21,7 +21,7 @@ BASE_URL="https://d37ci6vzurychx.cloudfront.net/trip-data"
 YEARS=(2025)
 MONTHS=(01 02 03)
 
-# Convenience override: `./download_data.sh stretch` → full 2023-2025
+# Convenience override: `./scripts/download_data.sh stretch` → full 2023-2025
 if [ "${1:-}" = "stretch" ]; then
     echo "Stretch mode: 2023-2025 full year (~128M rows, ~2 GB)"
     YEARS=(2023 2024 2025)

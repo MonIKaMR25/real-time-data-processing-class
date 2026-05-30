@@ -8,16 +8,16 @@ same cap (4 CPU / 8 GB). Scale up the data when you want bigger fireworks.
 ```bash
 # 1. Make sure OrbStack / Docker Desktop is running
 # 2. Download Q1 2025 data (~11M rows, ~150 MB)
-./download_data.sh
+./scripts/download_data.sh
 
 # 3. Bring up the whole stack: Postgres, CockroachDB (3 nodes), DuckDB runner
 docker compose up -d
 
 # 4. Load Postgres (streams via DuckDB postgres extension — no CSV intermediate)
-./bench python load_postgres.py
+./bench python src/load_postgres.py
 
 # 5. Run the head-to-head benchmark
-./bench python benchmark_queries.py
+./bench python src/benchmark_queries.py
 ```
 
 `./bench <cmd...>` is a thin wrapper over `docker compose exec duckdb <cmd...>` —
@@ -25,7 +25,24 @@ it runs the script inside the duckdb container where the 4 CPU / 8 GB cap matche
 Postgres. For the "lift the cage" reveal at the end of the lesson, run natively:
 
 ```bash
-uv run python benchmark_queries.py --duck-only
+uv run python src/benchmark_queries.py --duck-only
+```
+
+## Layout
+
+```
+src-lesson3/
+├── Dockerfile, docker-compose.yml, init.sql   # stack at root for `docker compose up`
+├── pyproject.toml, uv.lock                    # Python deps
+├── bench                                       # ./bench python src/<file>.py
+├── data/                                       # downloaded parquet (gitignored)
+├── scripts/                                    # shell utilities
+│   ├── download_data.sh
+│   └── download_data_1B.sh
+└── src/                                        # Python lesson code
+    ├── load_postgres.py
+    ├── benchmark_queries.py
+    └── experiment_*.py
 ```
 
 ## Scripts
@@ -45,9 +62,9 @@ uv run python benchmark_queries.py --duck-only
 The dataset is base-10 friendly so you can carry the mental model through bigger demos:
 
 ```
-10M rows   ./download_data.sh             ~150 MB parquet, ~1.5 GB pg heap, 20 s load
-100M rows  ./download_data.sh stretch     ~2 GB parquet,   ~17 GB pg heap,  ~7 min load
-1B rows    ./download_data_1B.sh          ~25 GB parquet,  ~150 GB pg heap, hours
+10M rows   ./scripts/download_data.sh             ~150 MB parquet, ~1.5 GB pg heap, 20 s load
+100M rows  ./scripts/download_data.sh stretch     ~2 GB parquet,   ~17 GB pg heap,  ~7 min load
+1B rows    ./scripts/download_data_1B.sh          ~25 GB parquet,  ~150 GB pg heap, hours
 ```
 
 At 10M the head-to-head ratios are 4-23×. At 128M the same code measures 19-103×.
@@ -67,7 +84,7 @@ DuckDB is normally a Python library, not a container. We containerize it here
 The 3-node CockroachDB cluster lives in this lesson's `docker-compose.yml`:
 
 ```bash
-./bench python experiment_sharded_copy.py --ranges 8 --conns 8 --rows 100000
+./bench python src/experiment_sharded_copy.py --ranges 8 --conns 8 --rows 100000
 ```
 
 > **Local result**: 3 CRDB nodes on one laptop share the same disk and CPU, so

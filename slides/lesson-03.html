@@ -557,7 +557,7 @@
         <div class="code-block reveal" style="margin-top:clamp(1rem,2vh,1.5rem);max-width:560px;flex:unset;">
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">CockroachDB &mdash; 3 nodes, disjoint ranges</span></div>
             <div class="code-body"><span class="c"># Split table into 8 ranges, COPY across all</span>
-<span class="v">$</span> ./bench python experiment_sharded_copy.py \
+<span class="v">$</span> ./bench python src/experiment_sharded_copy.py \
     --ranges <span class="g">8</span> --conns <span class="g">8</span> --rows <span class="g">100000</span>
 
 <span class="c"># Each connection writes to a different range</span>
@@ -781,7 +781,7 @@
     <div class="slide-content" style="max-width:min(90vw,850px);margin:0 auto;">
         <div class="section-marker reveal" style="color:var(--sage);border-color:var(--sage);">Physical layout</div>
         <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Column store: <em>DuckDB</em></h2>
-        <p class="subtitle reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);">Each column is stored contiguously. All 128M <code>fare_amount</code> values packed together, all <code>pickup_datetime</code> values together.</p>
+        <p class="subtitle reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);">Each column is stored contiguously. All 11M <code>fare_amount</code> values packed together, all <code>pickup_datetime</code> values together.</p>
         <svg class="reveal" viewBox="0 0 680 200" preserveAspectRatio="xMidYMid meet" style="width:100%;max-width:min(90vw,700px);height:auto;margin-top:clamp(0.4rem,0.8vh,0.6rem);">
             <style>
                 .col-seg-read { fill: var(--sage); rx: 2; }
@@ -1112,7 +1112,7 @@
 <span class="v">$</span> docker compose up -d
 
 <span class="c"># Run scripts inside the duckdb container:</span>
-<span class="v">$</span> ./bench python benchmark_queries.py</div>
+<span class="v">$</span> ./bench python src/benchmark_queries.py</div>
                 </div>
             </div>
         </div>
@@ -1461,7 +1461,7 @@
         <p class="subtitle reveal" style="color:rgba(255,255,255,0.55);margin-top:clamp(0.6rem,1.2vh,0.9rem);max-width:620px;">Everything you just saw &mdash; DuckDB caged at 4 CPU / 8 GB, same as Postgres. Take the cage off (run native on the host with all your cores and RAM):</p>
         <div class="code-block reveal" style="margin-top:clamp(0.7rem,1.5vh,1rem);max-width:540px;flex:unset;">
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">native DuckDB &mdash; no container</span></div>
-            <div class="code-body"><span class="v">$</span> uv run python benchmark_queries.py --duck-only</div>
+            <div class="code-body"><span class="v">$</span> uv run python src/benchmark_queries.py --duck-only</div>
         </div>
         <table class="latency-table reveal" style="max-width:600px;margin-top:clamp(0.6rem,1.2vh,1rem);color:rgba(255,255,255,0.8);">
             <thead><tr style="color:rgba(255,255,255,0.5);"><th></th><th style="text-align:right;">caged</th><th style="text-align:right;">uncaged</th><th style="text-align:right;">vs PG</th></tr></thead>
@@ -1529,17 +1529,17 @@
 <span class="c"># 2. Clone + cd into the lesson</span>
 <span class="v">$</span> cd src-lesson3
 
-<span class="c"># 3. Download Q1 2025 (~10M rows)</span>
-<span class="v">$</span> ./download_data.sh
+<span class="c"># 3. Download Q1 2025 (~11M rows)</span>
+<span class="v">$</span> ./scripts/download_data.sh
 
 <span class="c"># 4. Bring up Postgres + CRDB + DuckDB containers</span>
 <span class="v">$</span> docker compose up -d
 
 <span class="c"># 5. Load Postgres (streams via DuckDB postgres extension)</span>
-<span class="v">$</span> ./bench python load_postgres.py
+<span class="v">$</span> ./bench python src/load_postgres.py
 
 <span class="c"># 6. Run the benchmark</span>
-<span class="v">$</span> ./bench python benchmark_queries.py</div>
+<span class="v">$</span> ./bench python src/benchmark_queries.py</div>
         </div>
         <div class="two-col reveal" style="margin-top:clamp(0.5rem,1vh,0.8rem);flex:unset;">
             <div class="col">
@@ -1572,7 +1572,7 @@
         <ul class="bullets reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);">
             <li><strong>Source:</strong> NYC Taxi &amp; Limousine Commission (cloudfront.net)</li>
             <li><strong>Workshop default:</strong> Q1 2025 (3 monthly Parquet files) &rarr; <strong>~11M rows</strong></li>
-            <li><strong>Scale ladder:</strong> 10M (default) &middot; 100M (<code>./download_data.sh stretch</code>) &middot; 1B (<code>./download_data_1B.sh</code>, full 2009&ndash;2025 archive)</li>
+            <li><strong>Scale ladder:</strong> 11M (default) &middot; 128M (<code>./scripts/download_data.sh stretch</code>) &middot; 1B (<code>./scripts/download_data_1B.sh</code>, full 2009&ndash;2025 archive)</li>
             <li><strong>Columns:</strong> 20 in the 2025 superset (schema drifts across years &mdash; loader uses DuckDB <code>union_by_name</code> to absorb it)</li>
             <li><strong>Why Parquet?</strong> Already columnar on disk. DuckDB reads with zero loading. Postgres requires COPY import &mdash; itself instructive: ~20 s to load what DuckDB queries instantly.</li>
         </ul>
@@ -1580,8 +1580,8 @@
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">Postgres table DDL</span></div>
             <div class="code-body"><span class="k">CREATE TABLE</span> trips (
     vendor_id <span class="n">INT</span>,
-    pickup_datetime <span class="n">TIMESTAMPTZ</span>,
-    dropoff_datetime <span class="n">TIMESTAMPTZ</span>,
+    pickup_datetime <span class="n">TIMESTAMP</span>,
+    dropoff_datetime <span class="n">TIMESTAMP</span>,
     passenger_count <span class="n">INT</span>,
     trip_distance <span class="n">NUMERIC</span>(<span class="g">10</span>,<span class="g">2</span>),
     fare_amount <span class="n">NUMERIC</span>(<span class="g">10</span>,<span class="g">2</span>),

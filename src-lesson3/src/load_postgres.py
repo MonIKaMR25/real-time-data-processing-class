@@ -19,7 +19,7 @@ from pathlib import Path
 
 import duckdb
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).parent.parent / "data"
 PG_HOST = os.environ.get("PG_HOST", "localhost")
 PG_PORT = os.environ.get("PG_PORT", "5432")
 PG_CONN_STR = f"host={PG_HOST} port={PG_PORT} user=bench password=bench dbname=bench"

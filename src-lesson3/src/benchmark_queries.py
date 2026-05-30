@@ -21,7 +21,7 @@ from pathlib import Path
 import duckdb
 import psycopg
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).parent.parent / "data"
 PG_HOST = os.environ.get("PG_HOST", "localhost")
 PG_PORT = os.environ.get("PG_PORT", "5432")
 PG_DSN = f"postgresql://bench:bench@{PG_HOST}:{PG_PORT}/bench"
