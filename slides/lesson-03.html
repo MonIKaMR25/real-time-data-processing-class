@@ -648,7 +648,7 @@
 <!-- ─── SLIDE 6 · DEMO: THE VISCERAL GAP ───────────── -->
 <section class="slide" id="slide-demo-gap" style="background:var(--charcoal);">
     <div class="slide-content" style="align-items:center;text-align:center;justify-content:center;max-width:min(90vw,800px);margin:0 auto;">
-        <div class="reveal label" style="color:rgba(255,255,255,0.4);margin-bottom:clamp(0.5rem,1.5vh,1.2rem);">Live demo &middot; same query, different engine</div>
+        <div class="reveal label" style="color:rgba(255,255,255,0.4);margin-bottom:clamp(0.5rem,1.5vh,1.2rem);">Live demo &middot; benchmark_queries.py</div>
         <h2 class="reveal" style="color:var(--cream);font-size:clamp(1.8rem,4.5vw,3.2rem);">11M rows. One <em style="color:var(--warm);">question.</em></h2>
         <div class="code-block reveal" style="margin-top:clamp(1rem,2vh,1.5rem);max-width:560px;flex:unset;">
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">SQL &mdash; identical in both engines</span></div>
@@ -1138,6 +1138,10 @@
             <div class="prompt-text">&ldquo;Run this query in both Postgres and DuckDB. Time each. Then run EXPLAIN ANALYZE in DuckDB &mdash; how many row groups were scanned vs. skipped?&rdquo;</div>
         </div>
         <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:600px;">
+            <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">shell &mdash; benchmark_queries.py</span></div>
+            <div class="code-body"><span class="v">$</span> ./bench python src/benchmark_queries.py --query 2</div>
+        </div>
+        <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:600px;">
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">SQL</span></div>
             <div class="code-body"><span class="k">SELECT</span> <span class="fn">DATE_TRUNC</span>(<span class="s">'month'</span>, pickup_datetime) <span class="k">AS</span> month,
        payment_type,
@@ -1167,6 +1171,10 @@
         <div class="prompt-block reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);">
             <div class="prompt-label">opencode prompt</div>
             <div class="prompt-text">&ldquo;Run this GROUP BY in both engines. In DuckDB&rsquo;s EXPLAIN ANALYZE, find the hash aggregation step &mdash; what batch size does it process at once?&rdquo;</div>
+        </div>
+        <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:600px;">
+            <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">shell &mdash; benchmark_queries.py</span></div>
+            <div class="code-body"><span class="v">$</span> ./bench python src/benchmark_queries.py --query 3</div>
         </div>
         <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:560px;">
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">SQL</span></div>
@@ -1263,7 +1271,7 @@
 <!-- ─── SLIDE 24 · POINT QUERIES: DUCKDB'S WEAKNESS ── -->
 <section class="slide" id="slide-point-query" style="background:var(--charcoal);">
     <div class="slide-content" style="align-items:center;text-align:center;justify-content:center;max-width:min(90vw,800px);margin:0 auto;">
-        <div class="reveal label" style="color:rgba(255,255,255,0.4);margin-bottom:clamp(0.5rem,1.5vh,1.2rem);">Experiment A &middot; point lookup</div>
+        <div class="reveal label" style="color:rgba(255,255,255,0.4);margin-bottom:clamp(0.5rem,1.5vh,1.2rem);">Experiment A &middot; experiment_point_query.py</div>
         <h2 class="reveal" style="color:var(--cream);font-size:clamp(1.8rem,4.5vw,3.2rem);">Find <em style="color:var(--terracotta);">one row</em></h2>
         <div class="code-block reveal" style="margin-top:clamp(1rem,2vh,1.5rem);max-width:560px;flex:unset;">
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">SQL &mdash; same in both</span></div>
@@ -1294,6 +1302,10 @@
         <div class="prompt-block reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);">
             <div class="prompt-label">opencode prompt</div>
             <div class="prompt-text">&ldquo;Run the rolling average in both engines. The speedup is smaller here than in Q1&ndash;Q3 &mdash; why? Ask the AI to explain, then verify the answer against the actual EXPLAIN ANALYZE plan.&rdquo;</div>
+        </div>
+        <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:600px;">
+            <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">shell &mdash; benchmark_queries.py</span></div>
+            <div class="code-body"><span class="v">$</span> ./bench python src/benchmark_queries.py --query 4</div>
         </div>
         <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:600px;">
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">SQL</span></div>
@@ -1387,6 +1399,11 @@
 <section class="slide" id="slide-compression-exp">
     <div class="slide-content" style="max-width:min(90vw,850px);margin:0 auto;">
         <div class="section-marker reveal" style="color:var(--sage);border-color:var(--sage);">Experiment B &middot; compression</div>
+        <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:600px;">
+            <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">shell &mdash; DuckDB</span></div>
+            <div class="code-body"><span class="c">-- Inspect per-column compression</span>
+<span class="v">$</span> ./bench duckdb <span class="s">"CALL pragma_storage_info('trips');"</span></div>
+        </div>
         <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">What did DuckDB <em>actually</em> do?</h2>
         <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:560px;">
             <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">SQL &mdash; DuckDB storage inspection</span></div>
@@ -1414,6 +1431,10 @@
 <section class="slide" id="slide-ordering">
     <div class="slide-content" style="max-width:min(90vw,850px);margin:0 auto;">
         <div class="section-marker reveal" style="color:var(--sage);border-color:var(--sage);">Experiment C &middot; data ordering</div>
+        <div class="code-block reveal" style="flex:unset;margin-top:clamp(0.4rem,0.8vh,0.6rem);max-width:600px;">
+            <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">shell &mdash; experiment_ordering.py</span></div>
+            <div class="code-body"><span class="v">$</span> ./bench python src/experiment_ordering.py</div>
+        </div>
         <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Sort order makes zone maps <em>click</em></h2>
         <p class="subtitle reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);">Build two copies, run the same query across windows of increasing width.</p>
         <table class="latency-table reveal" style="max-width:600px;margin-top:clamp(0.4rem,0.8vh,0.6rem);">
