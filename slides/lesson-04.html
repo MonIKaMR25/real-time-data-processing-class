@@ -243,7 +243,7 @@ hr.rule{border:0;border-top:1px solid var(--rule);margin:0}
 <span class="kbd-hint">&uarr; &darr; navigate</span>
 
 <!-- ════════════════════════════════════════════════════════════
-     LESSON 4 — BATCH ETL · "MOVE THE DATA"  (43 slides)
+     LESSON 4 — BATCH ETL · "MOVE THE DATA"  (45 slides)
      ════════════════════════════════════════════════════════════ -->
 
 <!-- ─── 01 · TITLE ─────────────────────────────────────── -->
@@ -530,6 +530,9 @@ duck.<span class="fn">execute</span>(<span class="s">"INSERT INTO daily_revenue 
 <span class="s">      (date, status, total_revenue, order_count, avg_order_value, loaded_at)</span>
 <span class="s">    VALUES (?, ?, ?, ?, ?, ?)</span>
 <span class="s">"""</span>, row)   <span class="cm"># re-inserting the same key overwrites in place</span></div>
+    </div>
+    <div class="code-block reveal" style="margin-top:clamp(0.3rem,0.8vh,0.5rem);flex:unset;max-width:600px;font-size:0.85em;">
+      <div class="code-body"><span class="v">$</span> uv run src/pipeline_idempotent.py 2024-01-15 --strategy upsert</div>
     </div>
     <div class="callout danger reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
@@ -1388,7 +1391,48 @@ con.<span class="fn">execute</span>(<span class="r">"COMMIT"</span>)</div>
     </div>
   </div>
   <hr class="rule" style="margin-bottom:0.7rem;">
-  <div class="meta"><span>ANNEX</span><span>single-writer &middot; catchup &middot; reset</span><span>43 / 43</span></div>
+  <div class="meta"><span>ANNEX</span><span>single-writer &middot; catchup &middot; reset</span><span>43 / 45</span></div>
+</section>
+
+<!-- ─── 42 · ANNEX · SCRIPTS (1/2) ───────────────────────── -->
+<section class="slide" id="s44">
+  <div class="slide-content" style="max-width:min(92vw,940px);margin:0 auto;">
+    <div class="section-marker reveal" style="color:var(--muted);border-color:var(--rule-strong);">Annex &middot; scripts (1/2)</div>
+    <h2 class="reveal" style="margin-top:clamp(0.4rem,1vh,0.8rem);">Infrastructure &amp; pipeline phases.</h2>
+    <div class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.8rem);font-size:0.9em;max-width:880px;">
+      <div style="margin-bottom:0.6rem;"><strong>config.py</strong> — Shared connection config and schema setup. Defines Postgres DSN, DuckDB path, creates target tables. All scripts import from here.</div>
+      <div style="margin-bottom:0.6rem;"><strong>seed_data.py</strong> — Generates ~1M orders and ~50k customers in Postgres using DuckDB's postgres extension for fast server-side COPY. Configurable order count, customer count, and date window.</div>
+      <div style="margin-bottom:0.6rem;"><strong>probe_data.py</strong> — Shows current state of both databases: row counts, date ranges, sample data. Use <span class="ink-mono">--reset</span> to drop DuckDB and re-seed Postgres.</div>
+      <div style="margin-bottom:0.6rem;"><strong>pipeline_naive.py</strong> — Phase 1: extract → transform → blind append load. No idempotency — re-runs duplicate rows. Shows the problem.</div>
+      <div style="margin-bottom:0.6rem;"><strong>pipeline_idempotent.py</strong> — Phase 2: adds idempotency via DELETE+INSERT or UPSERT. Re-runs produce the same state.</div>
+      <div style="margin-bottom:0.6rem;"><strong>pipeline_failure.py</strong> — Phase 3: injects random crashes mid-load to demonstrate transactional recovery. DELETE+INSERT in one transaction means ROLLBACK leaves the target unchanged.</div>
+      <div style="margin-bottom:0.6rem;"><strong>pipeline_watermark.py</strong> — Phase 4: multi-date pipeline with a <span class="ink-mono">pipeline_metadata</span> ledger to track loaded dates. Critical lesson: data write and metadata write must commit in the SAME transaction.</div>
+    </div>
+  </div>
+  <hr class="rule" style="margin-bottom:0.7rem;">
+  <div class="meta"><span>ANNEX</span><span>infrastructure &amp; pipeline</span><span>44 / 45</span></div>
+</section>
+
+<!-- ─── 43 · ANNEX · SCRIPTS (2/2) ───────────────────────── -->
+<section class="slide" id="s45">
+  <div class="slide-content" style="max-width:min(92vw,940px);margin:0 auto;">
+    <div class="section-marker reveal" style="color:var(--muted);border-color:var(--rule-strong);">Annex &middot; scripts (2/2)</div>
+    <h2 class="reveal" style="margin-top:clamp(0.4rem,1vh,0.8rem);">Testing, validation, &amp; edge cases.</h2>
+    <div class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.8rem);font-size:0.9em;max-width:880px;">
+      <div style="margin-bottom:0.6rem;"><strong>prove_idempotent.py</strong> — Runs a pipeline N times and compares row counts + checksums. Proves idempotency (all runs identical) or detects duplication (naive loader).</div>
+      <div style="margin-bottom:0.6rem;"><strong>scd2.py</strong> — SCD Type 2 merge for customer dimension. Detects changed customers, expires old versions, inserts new ones with <span class="ink-mono">valid_from</span>/<span class="ink-mono">valid_to</span> windows. Includes <span class="ink-mono">--simulate-move</span> to mutate source and <span class="ink-mono">--show</span> to view version history.</div>
+      <div style="margin-bottom:0.6rem;"><strong>schema_validate.py</strong> — Declares expected source schema (column names + types). Queries <span class="ink-mono">information_schema.columns</span> and diffs against the contract. Detects missing columns, type changes, and new columns.</div>
+      <div style="margin-bottom:0.6rem;"><strong>data_quality.py</strong> — Value-level data quality checks on source and target (negative amounts, nulls, revenue mismatches). Catches issues schema contracts miss.</div>
+      <div style="margin-bottom:0.6rem;"><strong>experiment_upsert_gap.py</strong> — Demonstrates the UPSERT orphaned key problem: if a key disappears from the source, UPSERT leaves the old row behind while DELETE+INSERT removes it.</div>
+      <div style="margin-bottom:0.6rem;"><strong>experiment_timezone.py</strong> — Shows how <span class="ink-mono">created_at::date</span> partition boundaries shift based on session timezone. Counts rows for a date across UTC, America/Los_Angeles, and Asia/Tokyo.</div>
+    </div>
+    <div class="callout note reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.9 5.8L20 10l-5.1 1.2L13 17l-1.9-5.8L6 10l5.1-1.2z"/></svg>
+      <span class="ctxt">All scripts take <span class="ink-mono">--help</span>. The pipeline phases build on each other: naive → idempotent → failure → watermark. Run them in order to see the fixes accumulate.</span>
+    </div>
+  </div>
+  <hr class="rule" style="margin-bottom:0.7rem;">
+  <div class="meta"><span>ANNEX</span><span>testing &amp; edge cases</span><span>45 / 45</span></div>
 </section>
 
 <script>

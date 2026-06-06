@@ -56,6 +56,14 @@ def probe_postgres() -> None:
         print("  |----|-------------|--------|--------|------------|")
         for row in cur.fetchall():
             print(f"  | {row[0]} | {row[1]} | ${row[2]:.2f} | {row[3]} | {row[4]} |")
+        
+        # Sample customers
+        cur.execute("SELECT * FROM customers ORDER BY updated_at DESC LIMIT 3")
+        print("\nSample customers (latest 3):")
+        print("  | id | name | city | region | signup_date | updated_at |")
+        print("  |----|------|------|--------|-------------|------------|")
+        for row in cur.fetchall():
+            print(f"  | {row[0]} | {row[1]} | {row[2]} | {row[3]} | {row[4]} | {row[5]} |")
 
 
 def probe_duckdb() -> None:
