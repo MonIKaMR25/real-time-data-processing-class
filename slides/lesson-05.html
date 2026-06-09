@@ -642,11 +642,11 @@ sum(amount) mismatch on <span class="r">3</span> rows (updated_at not set)
     <div class="code-block reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);flex:unset;max-width:720px;">
       <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">cdc_consumer.py, DuckDBSink</span></div>
       <div class="code-body"><span class="k">def</span> <span class="fn">apply</span>(self, ev):
-    <span class="k">if</span> ev[<span class="s">"action"</span>] <span class="k">in</span> (<span class="s">"U"</span>, <span class="s">"D"</span>):
+    <span class="k">if</span> ev[<span class="s">"action"</span>] <span class="k">in</span> (<span class="s">"I"</span>, <span class="s">"U"</span>, <span class="s">"D"</span>):
         duck.<span class="fn">execute</span>(<span class="s">"DELETE FROM orders WHERE id = ?"</span>, [ev.id])
     <span class="k">if</span> ev[<span class="s">"action"</span>] <span class="k">in</span> (<span class="s">"I"</span>, <span class="s">"U"</span>):
         duck.<span class="fn">execute</span>(<span class="s">"INSERT INTO orders VALUES (?, ?, ?, ?, ?)"</span>, ev.row)
-    <span class="cm"># delete+insert = same result on replay. idempotent, like L4.</span></div>
+    <span class="cm"># delete runs for I too: a replayed INSERT is a no-op, not a dup key.</span></div>
     </div>
     <div class="callout note reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.7 3M3 4v4h4"/></svg>
