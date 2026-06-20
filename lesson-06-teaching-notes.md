@@ -345,6 +345,31 @@ docker start kafka-2 kafka-3
 
 **The one thing to land:** *A consumer that works alone is trivial. Production is the GROUP changing under you — joins, deaths, lag, disorder, dead brokers. At-least-once means a few duplicates are normal; correctness is "nothing LOST + an idempotent sink." This is the take-home.*
 
+### Movement 5 demo cheat-sheet (run in order)
+```bash
+# Break 01: Rebalance experiment
+uv run python src/experiment_rebalance.py                       # correct: ~83 dup, lost=0
+uv run python src/experiment_rebalance.py --skip-revoke-commit  # broken: ~101 dup, lost=0
+
+# Break 02: Lag under slow consumer
+uv run python src/produce_orders.py --rate 100 &                # producer in background
+uv run python src/consume_rebalance.py --name A --slow 10        # slow consumer
+uv run python src/watch_lag.py --group order-processor           # watch lag climb
+# In another terminal: uv run python src/consume_rebalance.py --name B --slow 10
+# Watch lag flatten/drain as B joins
+
+# Break 03: Out-of-order events
+uv run python src/produce_out_of_order.py                        # produce shuffled lifecycle
+uv run python src/produce_out_of_order.py --readback             # read back, see disorder
+
+# Break 04: Kill the brokers
+uv run python src/produce_orders.py --rate 50 --message-timeout 10000  # visible timeout
+docker stop kafka-3                                               # ISR 3→2, writes flow
+docker stop kafka-2                                               # ISR 2→1, producer fails
+docker logs kafka-1 | grep NotEnough                              # broker-side reason
+docker start kafka-2 kafka-3                                      # ISR heals, producer resumes
+```
+
 > ⚠ **Read this before teaching live — three places reality diverges from the slides. All verified on this cluster.** I fixed one real bug (`watch_lag.py`); the other two are narrative gaps to pre-empt out loud.
 
 ### Slide 21 — Divider: "Now break it."
@@ -407,6 +432,21 @@ docker start kafka-2 kafka-3
 # MOVEMENT 6 — Bridge to Spark + synthesis + take-home (slides 28–33)
 
 **The one thing to land:** *Everything you hand-rolled today is what Spark automates next week — but the mechanics (offsets, rebalances, lag) are still how you'll debug it.* The "why did we do this?" question gets answered here.
+
+### Movement 6 demo cheat-sheet (reference only)
+```bash
+# No live demos in this movement — it's conceptual synthesis.
+# Reference the out-of-order topic from Break 03 for the L7 cliffhanger:
+uv run python src/produce_out_of_order.py                        # already created in Movement 5
+# Tell students: "Keep this topic around — it's L7's lab rat."
+
+# Take-home reference (for students):
+# They need to ship a consumer that does what Movement 5 demonstrated:
+# - Manual commits, cooperative-sticky assignment
+# - on_revoke commits in-flight work
+# - Lag reporter (watch_lag.py is the reference implementation)
+# - Proof of join → kill → rejoin with zero loss
+```
 
 ### Slide 28 — Part three divider: "You'll never write a poll loop again"
 - **Purpose:** Emotional transition from the grind of manual loops to the promise of automation.
@@ -473,6 +513,37 @@ docker start kafka-2 kafka-3
 # MOVEMENT 7 — Annex / reference (slides 34–38)
 
 **The one thing to land:** *Here's your recipe for re-running the demos and debugging the inevitable gotchas.* This is the "at home" reference.
+
+### Movement 7 demo cheat-sheet (end-to-end reference)
+```bash
+# Full end-to-end run (if re-running everything from scratch)
+cd src-lesson6
+docker compose up -d                          # 3 brokers, KRaft
+uv run python src/create_topics.py            # orders: 6 partitions, RF=3
+uv run python src/create_topics.py --describe   # sanity: ISR shows all 3 per partition
+
+# Movement 4 — build by hand
+docker exec kafka-1 /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-1:9092 --describe --topic orders
+uv run python src/produce_orders.py --count 1000               # keyed histogram
+uv run python src/produce_orders.py --count 1000 --keyless     # even spread
+uv run python src/consume_naive.py                              # Ctrl-C, rerun → resumes
+
+# Movement 5 — break it
+uv run python src/experiment_rebalance.py                       # correct: ~83 dup
+uv run python src/experiment_rebalance.py --skip-revoke-commit  # broken: ~101 dup
+uv run python src/produce_orders.py --rate 100 &                # full speed
+uv run python src/consume_rebalance.py --name A --slow 10       # slow consumer
+uv run python src/watch_lag.py                                  # watch lag climb, add B
+uv run python src/produce_out_of_order.py && uv run python src/produce_out_of_order.py --readback
+docker stop kafka-3      # ISR shrinks, writes flow
+docker stop kafka-2      # NOT_ENOUGH_REPLICAS — refused, on purpose
+docker start kafka-2 kafka-3
+
+# Reset anytime
+docker compose down -v                              # wipes broker volumes (and stale cluster IDs)
+# Consumer groups reset by changing group.id or:
+# docker exec kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server kafka-1:9092 --group <group> --reset-offsets --to-earliest --execute --topic orders
+```
 
 ### Slide 34 — Annex: Run it yourself
 - **Commands:**
