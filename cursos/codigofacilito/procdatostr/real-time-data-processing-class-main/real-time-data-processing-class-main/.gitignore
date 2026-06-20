@@ -1,0 +1,42 @@
+# AI assistants
+.claude/
+.claude-design/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+.env
+*.egg-info/
+dist/
+build/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+
+# Lesson 3 — large/transient artifacts (downloaded parquet, intermediate CSV,
+# DuckDB databases created by experiments)
+src-lesson3/data/
+*.duckdb
+*.duckdb.wal
+_tmp_load.csv
+
+# Env files
+.env
+.env.local
+.env.*.local
+.DS_Store
