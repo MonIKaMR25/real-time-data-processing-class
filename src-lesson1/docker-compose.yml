@@ -3,7 +3,7 @@ services:
     image: postgres:16
     container_name: lesson1-postgres
     ports:
-      - "5432:5432"
+      - "${PG_PORT:-5432}:5432"
     environment:
       POSTGRES_DB: bench
       POSTGRES_USER: bench

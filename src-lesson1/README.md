@@ -13,7 +13,7 @@ PostgreSQL internals, load generation, and bottleneck analysis.
 
 ```bash
 # Start Postgres (constrained: 2 CPU, 4GB RAM)
-docker compose up -d
+docker compose up -d --wait
 
 # Install Python dependencies
 uv sync
@@ -21,6 +21,26 @@ uv sync
 # Verify connection
 psql "postgresql://bench:bench@localhost:5432/bench" -c "SELECT 1"
 ```
+
+If you already have another PostgreSQL on port 5432, start this one on a different host port:
+
+```bash
+PG_PORT=5433 docker compose up -d --wait
+DATABASE_URL="postgresql://bench:bench@localhost:5433/bench" psql "$DATABASE_URL" -c "SELECT 1"
+```
+
+All lesson scripts and reset.sh respect the DATABASE_URL environment variable.
+
+To avoid exporting variables manually every time, this folder now includes local defaults in .env:
+
+```bash
+docker compose up -d --wait
+source ./use-lesson-env.sh
+psql "$DATABASE_URL" -c "SELECT 1"
+uv run python demos/demo_oom.py --connections 1
+```
+
+That keeps this lesson on port 5433 without affecting your other local PostgreSQL.
 
 ## Lesson flow
 

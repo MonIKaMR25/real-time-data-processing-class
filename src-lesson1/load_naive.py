@@ -5,12 +5,31 @@ Usage:
 """
 
 import argparse
+import os
+from pathlib import Path
 import random
 import time
 
 import psycopg
 
-DSN = "dbname=bench user=bench password=bench host=localhost port=5432"
+
+def resolve_dsn() -> str:
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return database_url
+
+    script_path = Path(__file__).resolve()
+    for base in script_path.parents:
+        env_path = base / ".env"
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                if line.startswith("DATABASE_URL="):
+                    return line.partition("=")[2].strip()
+
+    return "postgresql://bench:bench@localhost:5432/bench"
+
+
+DSN = resolve_dsn()
 
 INSERT_SQL = """
     INSERT INTO orders (customer_id, amount)

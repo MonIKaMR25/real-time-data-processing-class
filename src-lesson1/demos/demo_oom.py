@@ -9,10 +9,29 @@ Usage:
 
 import argparse
 import asyncio
+import os
+from pathlib import Path
 
 import asyncpg
 
-DSN = "postgresql://bench:bench@localhost:5432/bench"
+
+def resolve_dsn() -> str:
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return database_url
+
+    script_path = Path(__file__).resolve()
+    for base in script_path.parents:
+        env_path = base / ".env"
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                if line.startswith("DATABASE_URL="):
+                    return line.partition("=")[2].strip()
+
+    return "postgresql://bench:bench@localhost:5432/bench"
+
+
+DSN = resolve_dsn()
 
 # Each connection will hold a large result set in backend memory
 BLOAT_SQL = """
@@ -22,6 +41,7 @@ BLOAT_SQL = """
 
 
 async def run(target: int) -> None:
+    approx_oom_connections = 82
     print(f"OOM demo — opening {target} connections, then bloating ALL at once")
     print("Container limit: 4GB RAM. This WILL kill the container.")
     print("-" * 60)
@@ -33,7 +53,7 @@ async def run(target: int) -> None:
         try:
             conn = await asyncpg.connect(DSN)
             conns.append(conn)
-            if (i + 1) % 100 == 0:
+            if (i + 1) % 1 == 0:
                 print(f"    {len(conns)} connections open")
         except Exception as e:
             print(f"    ✗ Failed at {len(conns)} connections: {e}")
@@ -57,7 +77,13 @@ async def run(target: int) -> None:
 
     try:
         await asyncio.gather(*[bloat(i, c) for i, c in enumerate(conns)])
-        print("  ✓ All queries returned. Container survived (unexpected).")
+        if len(conns) >= approx_oom_connections:
+            print("  ✓ All queries returned. Container survived (unexpected).")
+        else:
+            print(
+                "  ✓ All queries returned. Container survived, as expected at this connection count."
+            )
+            print(f"  Try again with --connections {approx_oom_connections} or higher to push toward OOM.")
     except Exception as e:
         print(f"\n  ✗ Cascade failure: {e}")
         print("  Container likely OOM-killed. Check: docker compose ps")

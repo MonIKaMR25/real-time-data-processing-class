@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-DSN="postgresql://bench:bench@localhost:5432/bench"
+DSN="${DATABASE_URL:-postgresql://bench:bench@localhost:5432/bench}"
 
 echo "Resetting bench database..."
 psql "$DSN" <<SQL
