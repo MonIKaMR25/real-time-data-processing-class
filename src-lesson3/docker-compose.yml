@@ -31,7 +31,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4"
+          cpus: "2"
           memory: 8g
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bench -d bench"]
@@ -58,7 +58,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4"
+          cpus: "2"
           memory: 8g
     command: sleep infinity
     depends_on:
@@ -79,7 +79,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: "1"
           memory: 4g
 
   crdb-2:
@@ -94,7 +94,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: "1"
           memory: 4g
 
   crdb-3:
@@ -109,7 +109,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: "1"
           memory: 4g
 
   crdb-init:
